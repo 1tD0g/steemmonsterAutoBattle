@@ -12,13 +12,13 @@ const statDiv = "currentScriptStatDiv";
 const mainDivUsernameDiv = "scriptUsernameDiv"
 const statusDiv = "currentScriptStatusDiv";
 const mainDiv = "scriptDiv";
-const mainDivHeight = 280;
+const mainDivHeight = 290;
 const mainDivWidth = 300;
 
 const ownDiv = `
 <div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: ${mainDivHeight}px; position:fixed; background-color: black; border: 2px solid white; color: white">
     <center>
-        <p style="color: red">Steemmonster Auto Battler</p><hr>
+        <p style="color: red">Steemmonster Auto Battler v1.0</p><span>Author: itD0g</span><hr>
     </center>
 </div>`;
 

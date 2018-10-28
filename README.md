@@ -1,6 +1,7 @@
-# Auto Battle in Steemmonster
+# SteemMonster Auto Battler
 
 Auto battle in steemmonster, The script will battle automatically using the same team.
+And record how many games you played, won, lost by the script.
 
 ## Author
 
