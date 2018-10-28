@@ -29,4 +29,8 @@ Auto battle in steemmonster, The script will battle automatically using the same
 
 **To stop the script just disable it on Tampermonkey and refresh the page**
 
-**Will update later when I have time, maybe make a UI or record how many games you lost or won.**
+## Updates:
+
+v0.1 : First Publish
+
+v1.0 : Added UI, Stats on played game..etc.
