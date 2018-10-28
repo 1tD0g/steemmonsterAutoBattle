@@ -45,6 +45,7 @@ function waitUntilBattleButtonAndClick(x){
             let battleButtons = document.getElementsByClassName("battle-btn");
             if(battleButtons == null) return;
             if(battleButtons.length < 1) return;
+            if(battleButtons[0] == null) return;
             clearInterval(checkInterval);
             battleButtons[0].click();
             return resolve();
