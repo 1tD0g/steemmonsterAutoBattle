@@ -21,11 +21,11 @@ Auto battle in steemmonster, The script will battle automatically using the same
 
 3. enable the script on Tampermonkey and refresh the site
 
-4. Play "Ranked" or "Partice" in Steemmonster
+4. The Script will start automatically.(Will click the **Battle** button for you automatically)
 
-5. The Script will start when it can find the **Battle** Button in the page.(So you don't have time to choose team or monster when you started the script.)
+5. The Script will keep running no matter you lose or win the game
 
-6. The Script will keep running no matter you lose or win the game
+**Click F12 -> Console can see how many games you played and won using the script**
 
 **To stop the script just disable it on Tampermonkey and refresh the page**
 

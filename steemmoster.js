@@ -8,27 +8,45 @@
 // @grant        none
 // ==/UserScript==
 
+let PlayerName = "";
+let playedGameNum = 0;
+let winGame = 0;
+let errorResultGame = 0;
+let running = false;
+
 (async function() {
     'use strict';
-    let running = false;
+
+    PlayerName = await getPlayerName(200);
+    console.log(`Hello ${PlayerName}.\nThank you for using this script.`);
+    console.log("Starting Script...");
+
+    if(! battleButtonExists()){
+        SM.ShowBattleHistory();
+        await waitX(2000);
+        SM.ShowCreateTeam('Ranked');
+    }
+
     setInterval(async () => {
         if(!running){
+            running = true;
+            await waitUntilBattleButtonAndClick(500);
+            await waitUntilBattleOpponentFound(2000);
+            await waitX(2000);
+            startFightLoop();
+            await waitX(2000);
+            btnSkipClick();
+            await waitX(2000);
+            await waitUntilBattleAgainAndClick();
+            running = false;
+            playedGameNum++;
             try{
-                console.log("Starting Script...");
-                running = true;
-                await waitUntilBattleButtonAndClick(200);
-                await waitUntilBattleOpponentFound(2000);
-                await waitX(2000);
-                startFightLoop();
-                await waitX(2000);
-                btnSkipClick();
-                await waitX(2000);
-                await waitUntilBattleAgainAndClick();
-                running = false;
-                console.log("1 Round Finished")
+                let winner = await getWinnerUsername(500);
+                if(winner == PlayerName) winGame++;
             }catch(e){
-                console.log("Error from Script: ", e);
+                errorResultGame++;
             }
+            console.log(`Player Name: ${PlayerName}\nPlayed Game: ${playedGameNum}\nWin: ${winGame}\nLose: ${playedGameNum - winGame - errorResultGame}\nError: ${errorResultGame}`);
        }
     }, 5000);
 })();
@@ -37,6 +55,24 @@ function waitX(x){
     return new Promise((resolve, reject) => {
         setTimeout(resolve, x)
     })
+}
+
+function getPlayerName(x){
+    return new Promise((resolve, reject) => {
+        let checkInterval = setInterval(() => {
+            console.log("Getting Player name...");
+            let sm = SM;
+            if(sm == null) return;
+            if(sm.Player == null) return;
+            if(sm.Player.name == null) return;
+            clearInterval(checkInterval);
+            return resolve(sm.Player.name);
+        }, x)
+    })
+}
+
+function battleButtonExists(){
+    return document.getElementsByClassName("battle-btn").length > 0;
 }
 
 function waitUntilBattleButtonAndClick(x){
@@ -73,6 +109,31 @@ function waitUntilBattleAgainAndClick(x){
             clearInterval(checkInterval);
             battleAgain.click();
             return resolve();
+        }, x)
+    })
+}
+
+function getWinnerUsername(x){
+    return new Promise((resolve, reject) => {
+        let checkInterval = setInterval(() => {
+            let result = document.getElementsByClassName("results-player winner");
+            if(result == null) return;
+            if(result.length < 1) return;
+            if(result[0] == null) return;
+            let children = result[0].children;
+            clearInterval(checkInterval);
+
+            for(var i = 0;i < children.length; i++){
+                if(children[i].className != "results-name")continue;
+                let name = children[i].innerHTML;
+                if(name != null && name != ""){
+                    return resolve(name.slice(1)); //Remove the '@' char
+                }else{
+                    return reject(); //No name in the div.
+                }
+            }
+
+            return reject(); //Name div not found
         }, x)
     })
 }
