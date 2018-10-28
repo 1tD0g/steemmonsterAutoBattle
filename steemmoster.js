@@ -18,6 +18,7 @@ let running = false;
     'use strict';
 
     PlayerName = await getPlayerName(200);
+    console.clear()
     console.log(`Hello ${PlayerName}.\nThank you for using this script.`);
     console.log("Starting Script...");
 
@@ -46,6 +47,7 @@ let running = false;
             }catch(e){
                 errorResultGame++;
             }
+            console.clear()
             console.log(`Player Name: ${PlayerName}\nPlayed Game: ${playedGameNum}\nWin: ${winGame}\nLose: ${playedGameNum - winGame - errorResultGame}\nError: ${errorResultGame}`);
        }
     }, 5000);
@@ -78,6 +80,7 @@ function battleButtonExists(){
 function waitUntilBattleButtonAndClick(x){
     return new Promise((resolve, reject) => {
         let checkInterval = setInterval(() => {
+            console.log("Waiting Battle! Button...")
             let battleButtons = document.getElementsByClassName("battle-btn");
             if(battleButtons == null) return;
             if(battleButtons.length < 1) return;
