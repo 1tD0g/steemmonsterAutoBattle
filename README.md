@@ -30,6 +30,10 @@ And record how many games you played, won, lost by the script.
 
 **To stop the script just disable it on Tampermonkey and refresh the page**
 
+## Screenshots:
+
+![ui](photos/ui.png)
+
 ## Updates:
 
 v0.1 : First Publish
