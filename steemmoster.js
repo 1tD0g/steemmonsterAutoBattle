@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SteemMonster Auto Battler
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.5
 // @description  Battle in Steem Monster automatically
 // @author       1tD0g
 // @match        https://steemmonsters.com/
@@ -11,16 +11,37 @@
 const statDiv = "currentScriptStatDiv";
 const mainDivUsernameDiv = "scriptUsernameDiv"
 const statusDiv = "currentScriptStatusDiv";
+const stopInputDiv = "autoStopInput";
+const showAutoStopDiv = "autoStopValDiv";
 const mainDiv = "scriptDiv";
-const mainDivHeight = 290;
-const mainDivWidth = 300;
+const mainDivHeight = 480;
+const mainDivWidth = 200;
 
 const ownDiv = `
 <div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: ${mainDivHeight}px; position:fixed; background-color: black; border: 2px solid white; color: white">
     <center>
-        <p style="color: red">Steemmonster Auto Battler v1.0</p><span>Author: itD0g</span><hr>
+        <p style="color: red">SteemMonster<br>Auto Battler v1.5</p><span>Author: <b>itD0g</b></span><hr>
     </center>
 </div>`;
+
+const setAutoStopGame = `
+<script>
+    let userSetAmount = null;
+    function setAutoStopGame(){
+        let val = $("#${stopInputDiv}").val();
+        if(val < 1 && val != -1){
+            alert("Minium number is 1");
+            return;
+        }
+        if(val == -1){
+            alert("Script will not stop automatically now.");
+            userSetAmount = null;
+            return;
+        }
+        userSetAmount = val;
+        alert("Script will stop when Player Game >= " + userSetAmount);
+    }
+</script>`;
 
 let PlayerName = "";
 let playedGameNum = 0;
@@ -32,8 +53,16 @@ let running = false;
     'use strict';
 
     $("body").append(ownDiv);
-    $(`#${mainDiv}`).append(`<p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p><span id="${statDiv}"></span><hr><span id="${statusDiv}"></span>`);
+    $("body").append(setAutoStopGame);
+    $(`#${mainDiv}`).append(`
+    <p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p><center>
+    <span id="${statDiv}"></span><hr>Auto Stop When Played Game equals to(type -1 to stop): <br>
+    <input id="${stopInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/>
+    <button onClick="setAutoStopGame()" style="color: red">Set</button></center><hr>
+    <span id="${statusDiv}"></span>
+    `);
     updateStatDiv();
+    autoUpdateUserSetAmount();
     $(`#${mainDiv}`).draggable();
 
     PlayerName = await getPlayerName(200);
@@ -47,7 +76,7 @@ let running = false;
         SM.ShowCreateTeam('Ranked');
     }
 
-    setInterval(async () => {
+    let mainInterval = setInterval(async () => {
         if(!running){
             running = true;
             await waitUntilBattleButtonAndClick(500);
@@ -66,11 +95,23 @@ let running = false;
             }catch(e){
                 errorResultGame++;
             }
+            if(userSetAmount != null && playedGameNum >= userSetAmount){
+                clearInterval(mainInterval);
+                running = false;
+                updateStatDiv();
+                updateStatusDiv("Played Game is now :" + playedGameNum + "\nScript Stopped.");
+            }
 
             updateStatDiv();    
         }
     }, 5000);
 })();
+
+function autoUpdateUserSetAmount(){
+    setInterval(() => {
+        $(`#${showAutoStopDiv}`).html(`<br>Auto Stop: <b>${userSetAmount == null ? "Not Set" : userSetAmount}</b>`)
+    }, 500);
+}
 
 function waitX(x){
     return new Promise((resolve, reject) => {
@@ -83,7 +124,7 @@ function updateStatusDiv(txt){
 }
 
 function updateStatDiv(){
-    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b>`);
+    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b><span id="${showAutoStopDiv}"></span>`);
 }
 
 function getPlayerName(x){
@@ -92,7 +133,10 @@ function getPlayerName(x){
             updateStatusDiv("Getting Player name...");
             let sm = SM;
             if(sm == null) return;
-            if(sm.Player == null) return;
+            if(sm.Player == null) {
+                updateStatusDiv("Please Login first...");
+                return;
+            }
             if(sm.Player.name == null) return;
             updateStatusDiv("Got Player name !");
             clearInterval(checkInterval);
