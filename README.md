@@ -39,3 +39,5 @@ And record how many games you played, won, lost by the script.
 v0.1 : First Publish
 
 v1.0 : Added UI, Stats on played game..etc.
+
+v1.5 : Added Auto Stop function when played game is equals to user set amount.
