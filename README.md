@@ -32,7 +32,7 @@ And record how many games you played, won, lost by the script.
 
 ## Screenshots:
 
-![ui](photos/ui.png)
+![ui](photos/ui.jpg)
 
 ## Updates:
 
