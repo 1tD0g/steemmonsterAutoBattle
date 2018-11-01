@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SteemMonster Auto Battler
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.7
 // @description  Battle in Steem Monster automatically
 // @author       1tD0g
 // @match        https://steemmonsters.com/
@@ -12,21 +12,25 @@ const statDiv = "currentScriptStatDiv";
 const mainDivUsernameDiv = "scriptUsernameDiv"
 const statusDiv = "currentScriptStatusDiv";
 const stopInputDiv = "autoStopInput";
+const stopRatingInputDiv = "autoStopRatingInput";
 const showAutoStopDiv = "autoStopValDiv";
+const autoStopRatingDiv = "autoStopRatingDiv";
 const mainDiv = "scriptDiv";
-const mainDivHeight = 480;
+const mainDivHeight = 500;
 const mainDivWidth = 200;
 
 const ownDiv = `
-<div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: ${mainDivHeight}px; position:fixed; background-color: black; border: 2px solid white; color: white">
+<div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: auto; position:fixed; background-color: black; border: 2px solid white; color: white">
     <center>
-        <p style="color: red">SteemMonster<br>Auto Battler v1.5</p><span>Author: <b>itD0g</b></span><hr>
+        <p style="color: red">SteemMonster<br>Auto Battler v1.7</p><span>Author: <b>itD0g</b></span><hr>
     </center>
 </div>`;
 
 const setAutoStopGame = `
 <script>
     let userSetAmount = null;
+    let userSetStopRating = null;
+
     function setAutoStopGame(){
         let val = $("#${stopInputDiv}").val();
         if(val < 1 && val != -1){
@@ -34,12 +38,28 @@ const setAutoStopGame = `
             return;
         }
         if(val == -1){
-            alert("Script will not stop automatically now.");
+            alert("Stopping Auto Stop...");
             userSetAmount = null;
             return;
         }
         userSetAmount = val;
         alert("Script will stop when Player Game >= " + userSetAmount);
+    }
+
+    function setStopRating(){
+        let val = $("#${stopRatingInputDiv}").val();
+        if(val == - 1){
+            alert("Stopping Auto Stop...");
+            userSetStopRating = null;
+            return;
+        }
+        if(val < 1 && val != -1){
+            alert("Minimum number is 1");
+            return;
+        }
+
+        userSetStopRating = val;
+        alert("Script will stop when Player rating <= " + userSetStopRating);
     }
 </script>`;
 
@@ -58,21 +78,32 @@ let running = false;
     <p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p><center>
     <span id="${statDiv}"></span><hr>Auto Stop When Played Game equals to(type -1 to stop): <br>
     <input id="${stopInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/>
-    <button onClick="setAutoStopGame()" style="color: red">Set</button></center><hr>
+    <button onClick="setAutoStopGame()" style="color: red">Set</button><hr>
+    Auto Stop When Rating lower or equals to (type -1 to stop):<br>
+    <input id="${stopRatingInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/>
+    <button onClick="setStopRating()" style="color: red">Set</button></center><hr>
     <span id="${statusDiv}"></span>
     `);
-    updateStatDiv();
+    
     autoUpdateUserSetAmount();
     $(`#${mainDiv}`).draggable();
 
     PlayerName = await getPlayerName(200);
+    try{
+        let {rating} = await getPlayerDetails(PlayerName);
+        updateStatDiv(rating);
+    }catch(e){
+        console.log("Error getting the rating of player");
+        updateStatusDiv("Error getting the rating of player");
+        updateStatDiv();
+    }
     $(`#${mainDivUsernameDiv}`).html(`Username: ${PlayerName}`);
-
-    updateStatusDiv("Starting Script...");
     
+    updateStatusDiv("Starting Script...");
+
     if(! battleButtonExists()){
         SM.ShowBattleHistory();
-        await waitX(2000);
+        await waitX(3000);
         SM.ShowCreateTeam('Ranked');
     }
 
@@ -80,13 +111,13 @@ let running = false;
         if(!running){
             running = true;
             await waitUntilBattleButtonAndClick(500);
-            await waitUntilBattleOpponentFound(2000);
+            await waitUntilBattleOpponentFound(1000);
             await waitX(2000);
             startFightLoop();
-            await waitX(2000);
+            await waitX(5000);
             btnSkipClick();
-            await waitX(2000);
-            await waitUntilBattleAgainAndClick();
+            await waitX(5000);
+            await waitUntilBattleAgainAndClick(2000);
             running = false;
             playedGameNum++;
             try{
@@ -101,8 +132,17 @@ let running = false;
                 updateStatDiv();
                 updateStatusDiv("Played Game is now :" + playedGameNum + "\nScript Stopped.");
             }
-
-            updateStatDiv();    
+            try{
+                let { rating } = await getPlayerDetails(SM.Player.name);
+                updateStatDiv(rating);
+                if(userSetStopRating != null && rating <= userSetStopRating){
+                    clearInterval(mainInterval);
+                    running = false;
+                    updateStatusDiv("Player rating is now: " + rating + "\nScript Stopped");
+                }
+            }catch(e){
+                updateStatusDiv("Error getting User Rating...");
+            }
         }
     }, 5000);
 })();
@@ -110,6 +150,7 @@ let running = false;
 function autoUpdateUserSetAmount(){
     setInterval(() => {
         $(`#${showAutoStopDiv}`).html(`<br>Auto Stop: <b>${userSetAmount == null ? "Not Set" : userSetAmount}</b>`)
+        $(`#${autoStopRatingDiv}`).html(`<br>Auto Stop Rating: <b>${userSetStopRating == null ? "Not Set" : userSetStopRating}</b>`);
     }, 500);
 }
 
@@ -123,8 +164,8 @@ function updateStatusDiv(txt){
     $(`#${statusDiv}`).html(`Status: <b>${txt}</b>`);
 }
 
-function updateStatDiv(){
-    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b><span id="${showAutoStopDiv}"></span>`);
+function updateStatDiv(rating){
+    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b><br>Rating: <b>${rating == null ? "<b>Not Found</b>" : rating}</b><span id="${showAutoStopDiv}"></span><span id="${autoStopRatingDiv}"></span>`);
 }
 
 function getPlayerName(x){
@@ -167,13 +208,15 @@ function waitUntilBattleButtonAndClick(x){
 
 function waitUntilBattleOpponentFound(x){
     return new Promise((resolve, reject) => {
-        let intervv = setInterval(() => {
+        let intervv = setInterval(async () => {
             updateStatusDiv("Waiting Opponent...");
             let dialog = document.getElementById("find_opponent_dialog");
             if(dialog != null && dialog.style.display == "none"){
                 updateStatusDiv("Opponent Found !")
                 clearInterval(intervv);
                 return resolve();
+            }else if(dialog == null){
+                await waitUntilBattleButtonAndClick(100);
             }
         }, x)
     })
@@ -215,5 +258,20 @@ function getWinnerUsername(x){
 
             return reject(); //Name div not found
         }, x)
+    })
+}
+
+function getPlayerDetails(playerName){
+    return new Promise((resolve, reject) => {
+        SM.Api('/players/details', { name: playerName }, res => {
+            if(res.error) return reject(error);
+            return resolve({
+                totalBattles: res.battles,
+                totalWins: res.wins,
+                currentStreak: res.current_streak,
+                rating: res.rating,
+                rank: res.rank
+            });
+        });
     })
 }

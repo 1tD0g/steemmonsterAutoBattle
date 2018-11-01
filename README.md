@@ -41,3 +41,5 @@ v0.1 : First Publish
 v1.0 : Added UI, Stats on played game..etc.
 
 v1.5 : Added Auto Stop function when played game is equals to user set amount.
+
+v1.7 : Added Auto Stop when rating lower or equal to user's specific amount and added rating on UI.
