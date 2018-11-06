@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         SteemMonster Auto Battler
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Battle in Steem Monster automatically
 // @author       1tD0g
-// @match        https://steemmonsters.com/
+// @match        https://steemmonsters.com/*
 // @require      https://code.jquery.com/ui/1.12.1/jquery-ui.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js
 // @grant        none
 // ==/UserScript==
 const statDiv = "currentScriptStatDiv";
@@ -22,7 +23,7 @@ const mainDivWidth = 200;
 const ownDiv = `
 <div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: auto; position:fixed; background-color: black; border: 2px solid white; color: white">
     <center>
-        <p style="color: red">SteemMonster<br>Auto Battler v1.7</p><span>Author: <b>itD0g</b></span><hr>
+        <p style="color: red">SteemMonster<br>Auto Battler v1.8</p><span>Author: <b>itD0g</b></span><hr>
     </center>
 </div>`;
 
@@ -69,21 +70,24 @@ let winGame = 0;
 let errorResultGame = 0;
 let running = false;
 
+const mainDivHTML = `
+<p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p>
+<center>
+    <span id="${statDiv}"></span><hr>
+    Auto Stop When Played Game equals to(type -1 to stop): <br>
+    <input id="${stopInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/><button onClick="setAutoStopGame()" style="color: red">Set</button>
+    <hr>
+    Auto Stop When Rating lower or equals to (type -1 to stop):<br>
+    <input id="${stopRatingInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/><button onClick="setStopRating()" style="color: red">Set</button>
+</center><hr>
+<span id="${statusDiv}"></span>`;
+
 (async function() {
     'use strict';
 
     $("body").append(ownDiv);
     $("body").append(setAutoStopGame);
-    $(`#${mainDiv}`).append(`
-    <p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p><center>
-    <span id="${statDiv}"></span><hr>Auto Stop When Played Game equals to(type -1 to stop): <br>
-    <input id="${stopInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/>
-    <button onClick="setAutoStopGame()" style="color: red">Set</button><hr>
-    Auto Stop When Rating lower or equals to (type -1 to stop):<br>
-    <input id="${stopRatingInputDiv}" type="number" value=1 min=1 style="color: red; width: 50px"/>
-    <button onClick="setStopRating()" style="color: red">Set</button></center><hr>
-    <span id="${statusDiv}"></span>
-    `);
+    $(`#${mainDiv}`).append(mainDivHTML);
     
     autoUpdateUserSetAmount();
     $(`#${mainDiv}`).draggable();
@@ -100,11 +104,13 @@ let running = false;
     $(`#${mainDivUsernameDiv}`).html(`Username: ${PlayerName}`);
     
     updateStatusDiv("Starting Script...");
+    let playRanked = confirm("Do you want to play Ranked Game ? \n\nClick Cancel to Play Practice Game.");
+    alert(`Script will automatically Play ${playRanked ? "Ranked" : "Practice"} Game.`);
 
     if(! battleButtonExists()){
         SM.ShowBattleHistory();
         await waitX(3000);
-        SM.ShowCreateTeam('Ranked');
+        SM.ShowCreateTeam(playRanked ? "Ranked" : "Practice");
     }
 
     let mainInterval = setInterval(async () => {
@@ -113,6 +119,8 @@ let running = false;
             await waitUntilBattleButtonAndClick(500);
             await waitUntilBattleOpponentFound(1000);
             await waitX(2000);
+            getBase64();
+            console.log(base64List);
             startFightLoop();
             await waitX(5000);
             btnSkipClick();
