@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SteemMonster Auto Battler
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.8.1
 // @description  Battle in Steem Monster automatically
 // @author       1tD0g
 // @match        https://steemmonsters.com/*
@@ -23,7 +23,7 @@ const mainDivWidth = 200;
 const ownDiv = `
 <div id="${mainDiv}" style="left: 0px; top: 0px; z-index: 9999999999; width: ${mainDivWidth}px; height: auto; position:fixed; background-color: black; border: 2px solid white; color: white">
     <center>
-        <p style="color: red">SteemMonster<br>Auto Battler v1.8</p><span>Author: <b>itD0g</b></span><hr>
+        <p style="color: red">SteemMonster<br>Auto Battler v1.8.1</p><span>Author: <b>itD0g</b></span><hr>
     </center>
 </div>`;
 
@@ -69,6 +69,7 @@ let playedGameNum = 0;
 let winGame = 0;
 let errorResultGame = 0;
 let running = false;
+let playRanked = false;
 
 const mainDivHTML = `
 <p id="${mainDivUsernameDiv}">Username: ${PlayerName}</p>
@@ -104,8 +105,8 @@ const mainDivHTML = `
     $(`#${mainDivUsernameDiv}`).html(`Username: ${PlayerName}`);
     
     updateStatusDiv("Starting Script...");
-    let playRanked = confirm("Do you want to play Ranked Game ? \n\nClick Cancel to Play Practice Game.");
-    alert(`Script will automatically Play ${playRanked ? "Ranked" : "Practice"} Game.`);
+    playRanked = confirm("==SMs Auto Battler by @itdog==\n\nDo you want to play Ranked Game ? \n\nClick Cancel to Play Practice Game.");
+    updateStatDiv();
 
     if(! battleButtonExists()){
         SM.ShowBattleHistory();
@@ -119,8 +120,6 @@ const mainDivHTML = `
             await waitUntilBattleButtonAndClick(500);
             await waitUntilBattleOpponentFound(1000);
             await waitX(2000);
-            getBase64();
-            console.log(base64List);
             startFightLoop();
             await waitX(5000);
             btnSkipClick();
@@ -173,7 +172,7 @@ function updateStatusDiv(txt){
 }
 
 function updateStatDiv(rating){
-    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b><br>Rating: <b>${rating == null ? "<b>Not Found</b>" : rating}</b><span id="${showAutoStopDiv}"></span><span id="${autoStopRatingDiv}"></span>`);
+    $(`#${statDiv}`).html(`Played Game: <b>${playedGameNum}</b><br>Win: <b>${winGame}</b><br>Lose: <b>${playedGameNum - winGame - errorResultGame}</b><br>Error: <b>${errorResultGame}</b><br>Rating: <b>${rating == null ? "<b>Not Found</b>" : rating}</b><br>Game Type: <b>${playRanked ? "Ranked" : "Parctice"}</b><span id="${showAutoStopDiv}"></span><span id="${autoStopRatingDiv}"></span>`);
 }
 
 function getPlayerName(x){
@@ -219,6 +218,17 @@ function waitUntilBattleOpponentFound(x){
         let intervv = setInterval(async () => {
             updateStatusDiv("Waiting Opponent...");
             let dialog = document.getElementById("find_opponent_dialog");
+            let progress = document.getElementsByClassName("find-match-timer-progress");
+            let currentWidth = progress[0].style.width;
+            if(currentWidth.includes("%")){
+                if(parseInt(currentWidth.replace("%", "")) > 100.0){
+                    updateStatusDiv("No Opponent Found.\nReady to search again.");
+                    cancel();
+                    await waitX(1000);
+                    await waitUntilBattleButtonAndClick(200);
+                }
+            }
+            //cancel();
             if(dialog != null && dialog.style.display == "none"){
                 updateStatusDiv("Opponent Found !")
                 clearInterval(intervv);

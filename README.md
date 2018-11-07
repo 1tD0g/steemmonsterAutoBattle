@@ -45,3 +45,5 @@ v1.5 : Added Auto Stop function when played game is equals to user set amount.
 v1.7 : Added Auto Stop when rating lower or equal to user's specific amount and added rating on UI.
 
 v1.8 : Added Auto Play Practice Game / Ranked Game (Known Bug: Won't Automatically find opponent, if opponent not found, the program will stuck there)
+
+v1.8.1 : Fix the bug on v1.8
